@@ -45,6 +45,15 @@ All MCP servers in this registry must:
 
 _**Non-compliant servers will be reviewed and may be removed from the registry.**_
 
+## 🔒 Security
+
+This repository implements multiple layers of security:
+- **Automated Security Scanning**: StackHawk DAST scans run automatically on all PRs and merges to main
+- **Security Review Process**: Dedicated security review workflows for changes
+- **Vulnerability Reporting**: See [SECURITY.md](.github/SECURITY.md) for reporting security issues
+
+For more information about our security scanning setup, see [docs/stackhawk.md](docs/stackhawk.md).
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
