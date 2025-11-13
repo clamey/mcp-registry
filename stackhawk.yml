@@ -1,0 +1,68 @@
+# StackHawk Configuration
+# https://docs.stackhawk.com/hawkscan/configuration/
+
+app:
+  # Application ID from StackHawk platform
+  applicationId: ${STACKHAWK_APP_ID:mcp-registry-proxy}
+  
+  # Environment name
+  env: ${STACKHAWK_ENV:Development}
+  
+  # The URL of the application to scan
+  host: ${STACKHAWK_HOST:http://localhost:4000}
+  
+  # Excluded paths - avoid scanning health check endpoints excessively
+  excludePaths:
+    - "/health/.*"
+
+# HawkScan configuration
+hawk:
+  # Spider configuration - how to discover endpoints
+  spider:
+    # Base path to start spidering from
+    base: true
+    # Maximum depth to spider
+    maxDurationMinutes: 5
+  
+  # Authentication configuration (if needed)
+  # authentication:
+  #   usernamePassword:
+  #     type: FORM
+  #     loginPath: /login
+  #     usernameField: username
+  #     passwordField: password
+  #     scanUsername: ${SCAN_USERNAME}
+  #     scanPassword: ${SCAN_PASSWORD}
+
+# Custom routes to scan (since this is a proxy service)
+routes:
+  - method: GET
+    path: /health/liveness
+    statusCode: 200
+  
+  # OpenAI proxy routes
+  - method: POST
+    path: /openai/v1/chat/completions
+    requestBody: |
+      {
+        "model": "gpt-3.5-turbo",
+        "messages": [{"role": "user", "content": "test"}]
+      }
+  
+  # Anthropic proxy routes  
+  - method: POST
+    path: /anthropic/v1/messages
+    requestBody: |
+      {
+        "model": "claude-3-sonnet-20240229",
+        "messages": [{"role": "user", "content": "test"}],
+        "max_tokens": 100
+      }
+
+# Scan configuration
+scan:
+  # Only report medium and higher severity findings
+  minSeverity: MEDIUM
+  
+  # Fail the scan on high or critical findings
+  failOnSeverity: HIGH

@@ -11,6 +11,18 @@ to [security@docker.com](mailto:security@docker.com).
 Reporter(s) can expect a response within 72 hours, acknowledging the issue was
 received.
 
+## Automated Security Scanning
+
+This repository uses StackHawk for automated Dynamic Application Security Testing (DAST).
+StackHawk scans run:
+- On every pull request to the main branch
+- On pushes to the main branch
+- Weekly on Mondays at 2 AM UTC
+- Manually via workflow dispatch
+
+The scans target the security reviewer proxy service to identify potential
+vulnerabilities in the running application.
+
 ## Review Process
 
 After receiving the report, an initial triage and technical analysis is

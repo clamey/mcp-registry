@@ -1,0 +1,94 @@
+name: StackHawk Security Scan
+
+on:
+  # Run on pull requests
+  pull_request:
+    branches:
+      - main
+  
+  # Run on pushes to main
+  push:
+    branches:
+      - main
+  
+  # Allow manual workflow dispatch
+  workflow_dispatch:
+  
+  # Run weekly on Monday at 2 AM UTC
+  schedule:
+    - cron: '0 2 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  stackhawk-scan:
+    name: StackHawk Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      
+      - name: Build proxy service
+        run: |
+          cd agents/security-reviewer/proxy
+          go build -o proxy main.go
+      
+      - name: Start proxy service
+        run: |
+          cd agents/security-reviewer/proxy
+          # Start the proxy in the background
+          # Set minimal required environment variables
+          export PROXY_LISTEN_ADDR=:4000
+          export PROXY_CLIENT_TOKEN=test-token-for-scanning
+          export OPENAI_API_KEY=sk-test-key-for-scanning
+          export ANTHROPIC_API_KEY=sk-ant-test-key-for-scanning
+          ./proxy &
+          PROXY_PID=$!
+          echo "PROXY_PID=$PROXY_PID" >> $GITHUB_ENV
+          
+          # Wait for the service to start
+          echo "Waiting for proxy service to start..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4000/health/liveness > /dev/null 2>&1; then
+              echo "Proxy service is ready!"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
+          
+          # Verify the service is running
+          curl -f http://localhost:4000/health/liveness || (echo "Failed to start proxy service" && exit 1)
+      
+      - name: Run StackHawk Scan
+        uses: stackhawk/hawkscan-action@v2
+        continue-on-error: true
+        with:
+          apiKey: ${{ secrets.STACKHAWK_API_KEY }}
+          configurationFiles: stackhawk.yml
+        env:
+          STACKHAWK_HOST: http://localhost:4000
+          STACKHAWK_ENV: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
+      
+      - name: Stop proxy service
+        if: always()
+        run: |
+          if [ -n "$PROXY_PID" ]; then
+            kill $PROXY_PID || true
+          fi
+      
+      - name: Upload StackHawk results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: stackhawk.sarif
+          category: stackhawk
