@@ -54,7 +54,7 @@ To run StackHawk scans locally:
    go build -o proxy main.go
    
    export PROXY_LISTEN_ADDR=:4000
-   export PROXY_CLIENT_TOKEN=test-token
+   export PROXY_API_KEY=test-token
    export OPENAI_API_KEY=sk-test-key
    export ANTHROPIC_API_KEY=sk-ant-test-key
    

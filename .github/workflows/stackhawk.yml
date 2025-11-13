@@ -48,7 +48,7 @@ jobs:
           # Start the proxy in the background
           # Set minimal required environment variables
           export PROXY_LISTEN_ADDR=:4000
-          export PROXY_CLIENT_TOKEN=test-token-for-scanning
+          export PROXY_API_KEY=test-token-for-scanning
           export OPENAI_API_KEY=sk-test-key-for-scanning
           export ANTHROPIC_API_KEY=sk-ant-test-key-for-scanning
           ./proxy &
